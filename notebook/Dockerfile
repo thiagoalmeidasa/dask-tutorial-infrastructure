@@ -15,6 +15,7 @@ RUN conda install --yes \
     distributed=1.22 \
     fastparquet \
     gcsfs \
+    h5py \
     ipywidgets \
     jupyterlab \
     lz4 \
@@ -48,6 +49,7 @@ RUN pip install daskernetes==0.1.3 \
 RUN jupyter labextension install \
     @jupyter-widgets/jupyterlab-manager \
     @jupyterlab/hub-extension \
+    dask-labextension \
     jupyterlab_bokeh
 
 RUN jupyter serverextension enable --py nbserverproxy --sys-prefix
@@ -56,10 +58,13 @@ USER root
 
 COPY prepare.sh /usr/bin/prepare.sh
 RUN chmod +x /usr/bin/prepare.sh
-RUN mkdir /home/$NB_USER/examples && chown -R $NB_USER /home/$NB_USER/examples
-RUN git clone https://github.com/martindurant/dask-tutorial-scipy-2018 /pre-home/ && chown -R $NB_USER /pre-home
-# COPY examples/ /pre-home/examples/
-COPY worker-template.yaml /pre-home
+
+RUN mkdir -p /pre-home/.dask/
+COPY worker-template.yaml /pre-home/
+COPY dask-config.yml /pre-home/.dask/config.yml
+RUN git clone https://github.com/martindurant/dask-tutorial-scipy-2018 /pre-home/dask-tutorial-scipy-2018 \
+      && git clone https://github.com/dask/dask-examples.git /pre-home/dask-examples \
+      && git clone https://github.com/dask/dask-tutorial.git /pre-home/dask-tutorial && chown -R $NB_USER /pre-home
 
 ENV DASK_TICK_MAXIMUM_DELAY=5s
 ENV DASKERNETES_DIAGNOSTICS_LINK {JUPYTERHUB_SERVICE_PREFIX}proxy/{port}/status

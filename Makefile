@@ -1,14 +1,18 @@
-cluster_name ?= dask-scipy
+cluster_name ?= dask-pycaxias-2018
 name ?= $(cluster_name)
-config ?= pangeo-config.yaml
-pangeo_version ?= v0.1.0-673e876
+config ?= jhub-config.yaml
+jhub_version ?= v0.7
 
 # GCP settings
-project_id ?= dask-demo-182016
+project_id ?= PROJECT_ID
 zone ?= us-central1-b
 num_nodes ?= 3
 machine_type ?= n1-standard-4
-user ?= <google-account-email>
+user ?= thiagoalmeidasa@gmail.com
+
+project:
+		gcloud projects create $(project_id)
+		sed -i 's/PROJECT_ID/$(project_id)/g' jhub-config.yaml notebook/worker-template.yaml
 
 cluster:
 	gcloud container clusters create $(cluster_name) \
@@ -16,14 +20,14 @@ cluster:
 	    --machine-type=$(machine_type) \
 	    --zone=$(zone) \
 	    --enable-autorepair \
-	    --enable-autoscaling --min-nodes=1 --max-nodes=200
+	    --enable-autoscaling --min-nodes=1 --max-nodes=300
 	gcloud beta container node-pools create dask-scipy-preemptible \
 	    --cluster=$(cluster_name) \
 	    --preemptible \
 	    --machine-type=$(machine_type) \
 	    --zone=$(zone) \
 	    --enable-autorepair \
-	    --enable-autoscaling --min-nodes=1 --max-nodes=900 \
+	    --enable-autoscaling --min-nodes=1 --max-nodes=300 \
 	    --node-taints preemptible=true:NoSchedule
 	gcloud container clusters get-credentials $(cluster_name) --zone $(zone)
 
@@ -36,25 +40,21 @@ helm:
 
 jupyterhub:
 	helm repo add jupyterhub https://jupyterhub.github.io/helm-chart/
-	helm repo add pangeo https://pangeo-data.github.io/helm-chart/
 	helm repo update
-	@echo "Installing pangeo..."
-	@helm install pangeo/pangeo \
-		--version=$(pangeo_version) \
+	@echo "Installing jupyterhub..."
+	@helm install jupyterhub/jupyterhub \
+		--version=$(jhub_version) \
 		--name=$(name) \
 		--namespace=$(name) \
 		-f $(config) \
 		-f secret-config.yaml
-		--set jupyterhub.proxy.secretToken="${JUPYTERHUB_PROXY_TOKEN}"
-
 
 upgrade:
 	@echo "Upgrading..."
-	@helm upgrade $(name) pangeo/pangeo \
-		--version=$(pangeo_version) \
+	@helm upgrade $(name) jupyterhub/jupyterhub \
+		--version=$(jhub_version) \
 		-f $(config) \
-		-f secret-config.yaml \
-		--set jupyterhub.proxy.secretToken="${JUPYTERHUB_PROXY_TOKEN}"
+		-f secret-config.yaml
 
 delete-helm:
 	helm delete $(name) --purge

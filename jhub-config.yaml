@@ -1,0 +1,35 @@
+proxy:
+  secretToken: "secret"
+
+singleuser:
+  cmd: ['start-singleuser.sh']
+  cloudMetadata:  # TODO: Remove?
+    enabled: true
+  image:
+    name: gcr.io/PROJECT_ID/dask-tutorial-notebook
+    tag: latest
+  cpu:
+    limit: 4
+    guarantee: 1
+  memory:
+    limit: 8G
+    guarantee: 2G
+  defaultUrl: "/lab"
+  serviceAccountName: hub
+  storage:
+    capacity: 50Gi
+  imagePullPolicy: Always
+  # extraEnv:
+  #   EXTRA_PIP_PACKAGESS: s3fs gcsfs
+
+cull:
+  enabled: true
+  users: false
+  timeout: 1200
+  every: 600
+
+auth:
+  admin:
+    access: true
+    users:
+      - thiagoalmeidasa

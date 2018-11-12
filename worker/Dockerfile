@@ -11,6 +11,7 @@ RUN conda install --yes -c conda-forge \
     fastparquet \
     gcsfs \
     git \
+    h5py \
     lz4 \
     netcdf4 \
     nomkl \
